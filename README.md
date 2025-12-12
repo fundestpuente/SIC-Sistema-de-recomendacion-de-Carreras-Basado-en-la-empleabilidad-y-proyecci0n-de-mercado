@@ -96,9 +96,6 @@ El proyecto requiere las siguientes librerías (ver `requirements.txt`):
 - **Algoritmo**: Random Forest Classifier.
 - **Objetivo**: Simulador de viabilidad ("Semáforo") para predecir éxito o saturación de nuevas carreras.
 
-## 4. Cartografía Interactiva
-- **Visualización**: Mapas de calor (Heatmaps) con coordenadas geográficas de provincias del Ecuador.
-
 ---
 
 # 🌍 Impacto Social
