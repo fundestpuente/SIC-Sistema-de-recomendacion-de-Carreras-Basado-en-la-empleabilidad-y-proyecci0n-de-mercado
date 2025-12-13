@@ -1,4 +1,4 @@
-# 🎓 CareerMatch AI - Sistema de recomendacion de Carreras Basado en la empleabilidad y proyección de mercado
+# 🎓 CareerMatch AI - Sistema de recomendacion de carreras basado en la empleabilidad y proyección de mercado
 
 ## 📌 Descripción del proyecto
 
