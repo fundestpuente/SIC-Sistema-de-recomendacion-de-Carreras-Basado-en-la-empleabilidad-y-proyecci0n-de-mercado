@@ -5,7 +5,7 @@ import time
 # --- IMPORTACIÓN DE MÓDULOS ---
 from src.data_manager import DataManager
 from src.nlp_module import NLPRecommender
-from src.clustering_module import CareerClusterer
+from src.clustering_module import CareerClusterer, plot_clusters_3d
 from src.prediction_module import CareerPredictor
 from src.eda_module import EDAModule
 
@@ -37,53 +37,41 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- CARGA DE DATOS Y MODELOS (CACHEADA) ---
+# --- CARGA DE DATOS Y MODELOS ---
 @st.cache_resource
 def load_system():
-    # 1. Inicializar DataManager
+    # 1. DataManager
     dm = DataManager()
-    
-    # Cargar CSVs (Asegúrate de que los nombres coincidan con tu carpeta data/)
-    success = dm.load_data(
-        'matricula_senescyt_2015_2023.csv', 
-        'encuentra_empleo_ofertas_2.csv', 
-        'inec_enemdu_salarios.csv'
-    )
-    
-    if not success:
-        return None, None, None, None, "Error cargando archivos CSV."
+    if not dm.load_data('matricula_senescyt_2015_2023.csv', 'encuentra_empleo_ofertas_2.csv', 'inec_enemdu_salarios.csv'):
+        return None, None, None, None, None, "Error cargando CSVs." # Retornamos un valor extra para EDA
 
-    # Procesar y fusionar
     df_master = dm.process_and_merge()
-    
-    if df_master is None:
-        return None, None, None, None, "Error procesando el DataFrame Maestro."
+    if df_master is None: return None, None, None, None, None, "Error procesando master."
 
-    # 2. Ejecutar Clustering
-    # Instanciamos la clase del módulo de clustering
+    # 2. Clustering
     clusterer = CareerClusterer(df_master)
     df_labeled = clusterer.ejecutar_clustering()
-    
-    # 3. Inicializar NLP (Con la lógica corregida)
+
+    # 3. NLP
     nlp = NLPRecommender(df_labeled)
-    
-    # 4. Inicializar Predictor
+
+    # 4. Predictor
     predictor = CareerPredictor()
-    predictor.entrenar_modelo() # Entrena con datos sintéticos
+    predictor.entrenar_modelo()
     
-    return df_labeled, nlp, predictor, dm, "OK"
+    # 5. EDA (Inicializamos pasando los DataFrames crudos para gráficos detallados)
+    eda = EDAModule(dm.df_matricula, dm.df_ofertas, dm.df_inec)
+
+    return df_labeled, nlp, predictor, eda, "OK" # Retornamos eda
 
 # --- INICIALIZACIÓN ---
 try:
-    with st.spinner("Iniciando motores de IA..."):
-        df_final, nlp_engine, predictor_engine, data_manager, status = load_system()
-        
+    df_final, nlp_engine, predictor_engine, eda_engine, status = load_system()
     if df_final is None:
-        st.error(f"⚠️ Error Crítico: {status}")
+        st.error(f"Error: {status}")
         st.stop()
-        
 except Exception as e:
-    st.error(f"Ocurrió un error inesperado: {e}")
+    st.error(f"Error init: {e}")
     st.stop()
 
 # --- SIDEBAR ---
@@ -121,21 +109,37 @@ if opcion == "Inicio":
         """)
 
 # --- PÁGINA: EDA ---
+# --- SECCIÓN PESTAÑA: ANÁLISIS DE MERCADO (ACTUALIZADA FIEL AL NOTEBOOK) ---
 elif opcion == "📊 Análisis de Mercado":
-    st.header("Radiografía del Mercado Laboral")
+    st.header("Radiografía del Mercado Laboral (EDA)")
     
-    tab1, tab2 = st.tabs(["Top Saturación", "Salarios vs Oferta"])
+    # Creamos pestañas internas para organizar los gráficos del notebook
+    tab1, tab2, tab3 = st.tabs(["🎓 Oferta Académica", "💼 Brecha de Talento", "💰 Salarios"])
     
     with tab1:
-        st.subheader("Carreras con Mayor Competencia")
-        # Llamamos a la función del módulo EDA (asegúrate de que eda_module.py tenga esta función)
-        fig = plot_top_saturadas(df_final)
-        st.plotly_chart(fig, use_container_width=True)
-        st.caption("Ratio: Número de estudiantes graduados vs. Ofertas disponibles.")
+        st.subheader("Tendencias de Matrícula")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.plotly_chart(eda_engine.plot_top_carreras_matricula(), use_container_width=True)
+        with col2:
+            st.plotly_chart(eda_engine.plot_tendencia_temporal(), use_container_width=True)
+            
+    with tab2:
+        st.subheader("La Realidad del Mercado: Graduados vs Ofertas")
+        st.markdown("""
+        Este gráfico cruza la oferta académica (barras azules) con la demanda laboral real (línea roja).
+        **Una brecha grande indica saturación.**
+        """)
+        # Este es el gráfico dual axis del notebook
+        st.plotly_chart(eda_engine.plot_brecha_talento(), use_container_width=True)
+        
+    with tab3:
+        st.subheader("Análisis Salarial")
+        st.plotly_chart(eda_engine.plot_distribucion_salarios(), use_container_width=True)
 
 # --- PÁGINA: CLUSTERING ---
 elif opcion == "🤖 Clustering (Segmentación)":
-    st.header("Segmentación de Mercado")
+    st.header("Segmentación de Mercado (K-Means)")
     st.write("La IA ha agrupado las carreras en 4 categorías según su comportamiento:")
     
     # Métricas
@@ -146,9 +150,12 @@ elif opcion == "🤖 Clustering (Segmentación)":
     c3.metric("Balanceada", conteo.get("Balanceada", 0))
     c4.metric("Saturada", conteo.get("Saturada", 0))
     
-    # Gráfico 3D
+    # Gráfico 3D (Ahora usamos la función importada directamente)
     fig_3d = plot_clusters_3d(df_final)
-    st.plotly_chart(fig_3d, use_container_width=True)
+    if fig_3d:
+        st.plotly_chart(fig_3d, use_container_width=True)
+    else:
+        st.error("No se pudo generar el gráfico 3D. Verifica los datos.")
     
     # Tabla
     with st.expander("Ver tabla de datos"):
