@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import time
 
 # --- IMPORTACIÓN DE MÓDULOS ---
 from src.data_manager import DataManager

@@ -13,18 +13,25 @@ Utilizando técnicas de **Machine Learning** y **Procesamiento de Lenguaje Natur
 ```text
 SIC-Sistema-de-recomendacion-de-Carreras-Basado-en-la-empleabilidad-y-proyecci0n-de-mercado/
 │
-├── data/                          # Almacenamiento de las bases de datos
+├── data/                          # Almacenamiento de las bases de datos (Inputs)
 │   ├── encuentra_empleo_ofertas_2.csv
 │   ├── inec_enemdu_salarios.csv
 │   └── matricula_senescyt_2015_2023.csv
 │
-├── notebooks/                     # Jupyter Notebooks del desarrollo
+├── src/                           # Módulos de la aplicación
+│   ├── data_manager.py            # Carga, limpieza, fusión de datos y mapeo INEC
+│   ├── eda_module.py              # Generación de gráficos estadísticos (Plotly)
+│   ├── clustering_module.py       # Algoritmo K-Means y visualización 3D
+│   ├── nlp_module.py              # Motor de recomendación semántica (TF-IDF)
+│   └── prediction_module.py       # Modelo predictivo Random Forest (Data Augmentation)
+│
+├── notebooks/                     # Jupyter Notebooks de experimentación (Prototipos)
 │   ├── 01_EDA_Analisis_Exploratorio.ipynb
 │   ├── 02_Clustering_KMeans.ipynb
 │   ├── 03_NLP_Recomendador.ipynb
-│   ├── 04_Modelos_Prediccion.ipynb
-│   └── CareerMatch_Demo_Interactivo.ipynb
+│   └── 04_Modelos_Prediccion.ipynb 
 │
+├── CareerMatchAI.py               # Aplicación Principal (Frontend - Streamlit)
 ├── requirements.txt               # Dependencias del proyecto
 └── README.md                      # Este archivo.
 
@@ -54,17 +61,18 @@ pip install -r requirements.txt
 ```
 
 ### Ejecuta el Demo Interactivo:
-Abre `notebooks/CareerMatch_Demo_Interactivo.ipynb` en **Jupyter Lab** o **Google Colab**.
+```bash
+streamlit run CareerMatchAI.py
+```
 
 ---
 
-# 📦 Dependencias principales
-El proyecto requiere las siguientes librerías (ver `requirements.txt`):
-- **pandas & numpy**: Procesamiento de datos matriciales.
-- **scikit-learn**: Algoritmos de ML (K-Means, Random Forest, TF-IDF).
-- **plotly**: Visualizaciones interactivas 3D y mapas.
-- **ipywidgets**: Interfaz gráfica dentro del Notebook.
-
+# 📦 Tecnologías utilizadas
+- **Python**: Tanto en script como en Jupyter Notebook.
+- **Machine Learning**: Scikit-Learn (K-Means, Random Forest, TF-IDF).
+- **Visualización**: Plotly Express (Gráficos interactivos 3D), Matplotlib/Seaborn
+- **Procesamiento de datos**: Pandas, Numpy
+- **Interfaz web interactiva**: Streamlit
 ---
 
 # 📊 Datos Utilizados
